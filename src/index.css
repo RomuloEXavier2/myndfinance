@@ -2,95 +2,95 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* MYND CFO - Premium Dark Finance Design System */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 220 20% 97%;
+    --foreground: 220 20% 10%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 220 20% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 220 20% 10%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 220 70% 50%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 220 15% 92%;
+    --secondary-foreground: 220 20% 20%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 220 15% 95%;
+    --muted-foreground: 220 10% 45%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 220 15% 92%;
+    --accent-foreground: 220 20% 20%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 220 15% 90%;
+    --input: 220 15% 90%;
+    --ring: 220 70% 50%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Finance specific tokens */
+    --income: 152 69% 45%;
+    --income-foreground: 0 0% 100%;
+    --expense: 0 72% 51%;
+    --expense-foreground: 0 0% 100%;
+    --reserve: 186 85% 45%;
+    --reserve-foreground: 0 0% 100%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 224 32% 6%;
+    --foreground: 210 20% 95%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 224 28% 9%;
+    --card-foreground: 210 20% 95%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 224 28% 9%;
+    --popover-foreground: 210 20% 95%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 224 25% 14%;
+    --secondary-foreground: 210 20% 85%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 224 25% 12%;
+    --muted-foreground: 215 15% 55%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 224 25% 16%;
+    --accent-foreground: 210 20% 95%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --border: 224 20% 16%;
+    --input: 224 20% 16%;
+    --ring: 217 91% 60%;
+
+    /* Finance tokens - Dark mode */
+    --income: 152 69% 50%;
+    --income-foreground: 0 0% 100%;
+    --expense: 0 72% 58%;
+    --expense-foreground: 0 0% 100%;
+    --reserve: 186 85% 55%;
+    --reserve-foreground: 0 0% 100%;
+
+    /* Sidebar */
+    --sidebar-background: 224 30% 8%;
+    --sidebar-foreground: 210 20% 85%;
+    --sidebar-primary: 217 91% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 224 25% 14%;
+    --sidebar-accent-foreground: 210 20% 95%;
+    --sidebar-border: 224 20% 14%;
+    --sidebar-ring: 217 91% 60%;
   }
 }
 
@@ -100,6 +100,145 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   }
+}
+
+@layer utilities {
+  /* Gradient backgrounds */
+  .gradient-income {
+    background: linear-gradient(135deg, hsl(var(--income)) 0%, hsl(152 69% 35%) 100%);
+  }
+
+  .gradient-expense {
+    background: linear-gradient(135deg, hsl(var(--expense)) 0%, hsl(0 72% 40%) 100%);
+  }
+
+  .gradient-reserve {
+    background: linear-gradient(135deg, hsl(var(--reserve)) 0%, hsl(186 85% 35%) 100%);
+  }
+
+  /* Glass morphism effect */
+  .glass {
+    background: hsl(var(--card) / 0.6);
+    backdrop-filter: blur(12px);
+    border: 1px solid hsl(var(--border) / 0.5);
+  }
+
+  /* Premium card glow */
+  .card-glow {
+    box-shadow: 
+      0 0 0 1px hsl(var(--border)),
+      0 4px 24px -4px hsl(var(--primary) / 0.15),
+      0 8px 32px -8px hsl(0 0% 0% / 0.3);
+  }
+
+  /* Animated pulse for microphone */
+  .mic-pulse {
+    animation: mic-pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes mic-pulse {
+    0%, 100% {
+      box-shadow: 0 0 0 0 hsl(var(--primary) / 0.7);
+    }
+    50% {
+      box-shadow: 0 0 0 20px hsl(var(--primary) / 0);
+    }
+  }
+
+  /* Recording animation */
+  .recording {
+    animation: recording 1s ease-in-out infinite;
+  }
+
+  @keyframes recording {
+    0%, 100% {
+      box-shadow: 0 0 0 0 hsl(var(--expense) / 0.7);
+      transform: scale(1);
+    }
+    50% {
+      box-shadow: 0 0 0 24px hsl(var(--expense) / 0);
+      transform: scale(1.05);
+    }
+  }
+
+  /* Fade in animation */
+  .fade-in {
+    animation: fadeIn 0.4s ease-out forwards;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Slide up animation */
+  .slide-up {
+    animation: slideUp 0.5s ease-out forwards;
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Number ticker animation */
+  .number-animate {
+    animation: numberPop 0.3s ease-out;
+  }
+
+  @keyframes numberPop {
+    0% {
+      transform: scale(1.1);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  /* Chart line glow */
+  .chart-glow-income {
+    filter: drop-shadow(0 0 8px hsl(var(--income) / 0.5));
+  }
+
+  .chart-glow-expense {
+    filter: drop-shadow(0 0 8px hsl(var(--expense) / 0.5));
+  }
+
+  .chart-glow-reserve {
+    filter: drop-shadow(0 0 8px hsl(var(--reserve) / 0.5));
+  }
+}
+
+/* Custom scrollbar for dark mode */
+.dark ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: hsl(224 28% 9%);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: hsl(224 20% 25%);
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: hsl(224 20% 35%);
 }
