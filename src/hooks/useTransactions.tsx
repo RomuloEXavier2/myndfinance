@@ -130,26 +130,39 @@ export function useTransactions() {
         body: { audioBase64 },
       });
 
-      // Handle edge function errors - parse the error context for the actual message
+      // Handle edge function errors
       if (error) {
         const errorContext = (error as any).context;
         if (errorContext) {
+          const status = errorContext.status;
+          
+          // Try to parse the error body
           try {
             const errorBody = await errorContext.json();
             const errorMessage = errorBody.error || "Erro ao processar áudio";
-            // Check for specific error codes
-            if (errorContext.status === 500) {
+            
+            // Return specific messages based on status
+            if (status === 500) {
               throw new Error("Serviço temporariamente indisponível. Tente novamente.");
             }
+            if (status === 429) {
+              throw new Error("Limite de requisições excedido. Aguarde um momento.");
+            }
+            if (status === 402) {
+              throw new Error("Créditos insuficientes. Contate o suporte.");
+            }
+            
             throw new Error(errorMessage);
           } catch (parseError) {
-            if ((parseError as Error).message.includes("Serviço temporariamente")) {
+            // If it's our own thrown error, re-throw it
+            if (parseError instanceof Error && parseError.message !== "Unexpected end of JSON input") {
               throw parseError;
             }
+            // Otherwise, generic error
             throw new Error("Erro ao processar áudio");
           }
         }
-        throw error;
+        throw new Error("Erro de conexão com o servidor");
       }
 
       // Handle errors returned in the data payload
