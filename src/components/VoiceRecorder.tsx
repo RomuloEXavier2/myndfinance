@@ -35,8 +35,13 @@ export function VoiceRecorder({ onRecordingComplete, isProcessing }: VoiceRecord
         // Convert to base64
         const reader = new FileReader();
         reader.onloadend = async () => {
-          const base64 = (reader.result as string).split(",")[1];
-          await onRecordingComplete(base64);
+          try {
+            const base64 = (reader.result as string).split(",")[1];
+            await onRecordingComplete(base64);
+          } catch (error) {
+            // Avoid unhandled promise rejection (the hook already shows a toast)
+            console.error("Error processing recorded audio:", error);
+          }
         };
         reader.readAsDataURL(audioBlob);
 
