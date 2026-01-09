@@ -1,6 +1,42 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
+const PAPO_FURADO_MESSAGE = "Papo furado detectado. Por favor, informe um valor financeiro.";
+
+// Browser records as `audio/webm;codecs=opus`.
+const DEFAULT_AUDIO_MIME = "audio/webm;codecs=opus";
+
+function parseAudioInput(audioBase64: string): {
+  base64: string;
+  mimeType: string;
+  format: string;
+} {
+  const trimmed = (audioBase64 ?? "").trim();
+  let mimeType = DEFAULT_AUDIO_MIME;
+  let base64 = trimmed;
+
+  // Accept either raw base64 OR a full data URL.
+  // data:audio/webm;codecs=opus;base64,AAAA...
+  const dataUrlMatch = /^data:([^;]+)(?:;[^,]*)?;base64,(.+)$/i.exec(trimmed);
+  if (dataUrlMatch) {
+    mimeType = dataUrlMatch[1];
+    base64 = dataUrlMatch[2];
+  }
+
+  // Remove whitespace/newlines that could break decoding.
+  base64 = base64.replace(/\s/g, "");
+
+  const lower = mimeType.toLowerCase();
+  const format =
+    lower.includes("webm") ? "webm" :
+    lower.includes("wav") ? "wav" :
+    (lower.includes("mpeg") || lower.includes("mp3")) ? "mp3" :
+    lower.includes("ogg") ? "ogg" :
+    "webm";
+
+  return { base64, mimeType, format };
+}
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -69,6 +105,8 @@ serve(async (req) => {
       );
     }
 
+    const { base64: audioData, mimeType: audioMimeType, format: audioFormat } = parseAudioInput(audioBase64);
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
@@ -86,13 +124,13 @@ serve(async (req) => {
         messages: [{
           role: "user",
           content: [
-            { 
-              type: "text", 
-              text: "Transcreva este áudio em português brasileiro. Retorne APENAS a transcrição literal, sem formatação ou explicações." 
+            {
+              type: "text",
+              text: "Transcreva este áudio em português brasileiro. Retorne APENAS a transcrição literal, sem formatação ou explicações."
             },
-            { 
-              type: "input_audio", 
-              input_audio: { data: audioBase64, format: "webm" } 
+            {
+              type: "input_audio",
+              input_audio: { data: audioData, format: audioFormat }
             }
           ]
         }],
@@ -115,41 +153,31 @@ serve(async (req) => {
       );
     }
 
-    console.log("Transcribed text:", transcribedText);
+    console.log("Audio Input Format:", audioFormat, "| MIME:", audioMimeType);
+    console.log("Transcribed Text:", transcribedText);
 
-    // Step 2: Extract financial data with STRICT validation
-    const extractionPrompt = `Você é um extrator de dados financeiros RIGOROSO. Analise o texto transcrito e extraia informações financeiras.
+    // Step 2: Extract financial data (flexible, but still safe)
+    const extractionSystemPrompt = `Você é um extrator de transações financeiras em português brasileiro.
 
-REGRAS ESTRITAS:
-1. O texto DEVE conter um VALOR NUMÉRICO (em reais) E uma DESCRIÇÃO do item/serviço
-2. Se o texto for conversa casual, poesia, música, piada, ou qualquer coisa SEM dados financeiros claros, retorne ERRO
-3. Palavras-chave para identificar transações válidas:
-   - RECEITA (entrada de dinheiro): "ganhei", "recebi", "salário", "vendi", "faturei", "entrou", "me pagaram"
-   - DESPESA (saída de dinheiro): "gastei", "paguei", "comprei", "custou", "saiu", "perdi"
-   - RESERVA (poupança/investimento): "guardei", "investi", "poupar", "reservei", "apliquei", "economizei"
+Seja FLEXÍVEL:
+- Se a transcrição estiver um pouco bagunçada, mas indicar intenção financeira e contiver um valor (em dígitos OU por extenso), extraia.
+- Converta valores por extenso (ex.: "cinquenta", "três mil") para número.
+- Se houver valor mas o tipo não estiver explícito, infira pelo contexto; se ainda ficar ambíguo, use DESPESA como padrão.
+
+Regras:
+- Não invente valores; se não houver valor identificável, retorne erro.
+- Categoria: se não tiver certeza, use "Outros" (não trate isso como erro).
 
 FORMATO DE RESPOSTA (JSON apenas, sem markdown):
 
-Se for transação válida:
-{"item": "descrição do item/serviço", "valor": numero_sem_simbolo, "tipo": "RECEITA|DESPESA|RESERVA", "categoria": "categoria apropriada", "forma_pagamento": "método ou null"}
+1) Transação válida:
+{"item": "descrição", "valor": numero_sem_simbolo, "tipo": "RECEITA|DESPESA|RESERVA", "categoria": "Outros|...", "forma_pagamento": "método ou null"}
 
-Se for comando de deletar (palavras como "apagar", "deletar", "remover", "cancelar" + "último/última"):
+2) Comando de deletar ("apagar/deletar/remover" + "último/última"):
 {"action": "DELETE_LAST"}
 
-Se NÃO for dado financeiro válido:
-{"error": "Papapo furado detectado. Por favor, informe um valor financeiro."}
-
-EXEMPLOS:
-- "Gastei 50 reais no almoço" → {"item": "almoço", "valor": 50, "tipo": "DESPESA", "categoria": "Alimentação", "forma_pagamento": null}
-- "Recebi 3000 de salário" → {"item": "salário", "valor": 3000, "tipo": "RECEITA", "categoria": "Salário", "forma_pagamento": null}
-- "Guardei 500 reais para emergência" → {"item": "reserva de emergência", "valor": 500, "tipo": "RESERVA", "categoria": "Poupança", "forma_pagamento": null}
-- "Bom dia, tudo bem?" → {"error": "Papapo furado detectado. Por favor, informe um valor financeiro."}
-- "A vida é bela como uma flor" → {"error": "Papapo furado detectado. Por favor, informe um valor financeiro."}
-- "Apagar última transação" → {"action": "DELETE_LAST"}
-
-TEXTO TRANSCRITO: "${transcribedText}"
-
-Responda APENAS com o JSON, sem explicações.`;
+3) Erro (APENAS se o texto estiver vazio ou claramente sem relação com dinheiro):
+{"error": "${PAPO_FURADO_MESSAGE}"}`;
 
     const extractionResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -160,7 +188,8 @@ Responda APENAS com o JSON, sem explicações.`;
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages: [
-          { role: "user", content: extractionPrompt }
+          { role: "system", content: extractionSystemPrompt },
+          { role: "user", content: transcribedText }
         ],
       }),
     });
@@ -173,7 +202,7 @@ Responda APENAS com o JSON, sem explicações.`;
 
     const extractionResult = await extractionResponse.json();
     const rawContent = extractionResult.choices?.[0]?.message?.content || "";
-    
+
     console.log("Raw AI response:", rawContent);
 
     // Parse JSON from response (handle potential markdown code blocks)
@@ -188,9 +217,9 @@ Responda APENAS com o JSON, sem explicações.`;
     } catch (parseError) {
       console.error("JSON parse error:", parseError, "Raw:", rawContent);
       return new Response(
-        JSON.stringify({ 
+        JSON.stringify({
           error: "Não entendi o que você disse. Tente novamente com um valor e descrição claros.",
-          transcription: transcribedText 
+          transcription: transcribedText
         }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -200,10 +229,15 @@ Responda APENAS com o JSON, sem explicações.`;
 
     // Check if AI returned an error (invalid financial data)
     if (financialData.error) {
+      const rawMsg = typeof financialData.error === "string" ? financialData.error : "";
+      const normalizedMsg = rawMsg.toLowerCase().includes("furado")
+        ? PAPO_FURADO_MESSAGE
+        : (rawMsg || "Erro ao processar comando de voz.");
+
       return new Response(
-        JSON.stringify({ 
-          error: financialData.error, 
-          transcription: transcribedText 
+        JSON.stringify({
+          error: normalizedMsg,
+          transcription: transcribedText
         }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -224,11 +258,11 @@ Responda APENAS com o JSON, sem explicações.`;
       }
 
       return new Response(
-        JSON.stringify({ 
-          success: true, 
-          action: "DELETE_LAST", 
+        JSON.stringify({
+          success: true,
+          action: "DELETE_LAST",
           message: "Última transação deletada",
-          transcription: transcribedText 
+          transcription: transcribedText
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -237,9 +271,9 @@ Responda APENAS com o JSON, sem explicações.`;
     // Validate required fields for a transaction
     if (!financialData.item || financialData.valor === undefined || !financialData.tipo) {
       return new Response(
-        JSON.stringify({ 
+        JSON.stringify({
           error: "Dados incompletos. Informe o que você gastou/recebeu e o valor.",
-          transcription: transcribedText 
+          transcription: transcribedText
         }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -249,9 +283,9 @@ Responda APENAS com o JSON, sem explicações.`;
     const validTipos = ["RECEITA", "DESPESA", "RESERVA"];
     if (!validTipos.includes(financialData.tipo)) {
       return new Response(
-        JSON.stringify({ 
+        JSON.stringify({
           error: "Tipo de transação inválido. Use: receita, despesa ou reserva.",
-          transcription: transcribedText 
+          transcription: transcribedText
         }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -261,9 +295,9 @@ Responda APENAS com o JSON, sem explicações.`;
     const valor = parseFloat(financialData.valor);
     if (isNaN(valor) || valor <= 0) {
       return new Response(
-        JSON.stringify({ 
+        JSON.stringify({
           error: "Valor inválido. Informe um número positivo.",
-          transcription: transcribedText 
+          transcription: transcribedText
         }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -277,7 +311,7 @@ Responda APENAS com o JSON, sem explicações.`;
         item: financialData.item,
         valor: valor,
         tipo: financialData.tipo,
-        categoria: financialData.categoria || "Geral",
+        categoria: financialData.categoria || "Outros",
         forma_pagamento: financialData.forma_pagamento || null,
       })
       .select()
@@ -288,18 +322,18 @@ Responda APENAS com o JSON, sem explicações.`;
       throw insertError;
     }
 
-    const tipoLabel = financialData.tipo === "RECEITA" 
-      ? "Receita" 
-      : financialData.tipo === "DESPESA" 
-        ? "Despesa" 
+    const tipoLabel = financialData.tipo === "RECEITA"
+      ? "Receita"
+      : financialData.tipo === "DESPESA"
+        ? "Despesa"
         : "Reserva";
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        transaction, 
+      JSON.stringify({
+        success: true,
+        transaction,
         transcription: transcribedText,
-        message: `${tipoLabel} de R$ ${valor.toFixed(2)} registrada: ${financialData.item}` 
+        message: `${tipoLabel} de R$ ${valor.toFixed(2)} registrada: ${financialData.item}`
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
@@ -307,7 +341,7 @@ Responda APENAS com o JSON, sem explicações.`;
   } catch (err: unknown) {
     console.error("Error:", err);
     const message = err instanceof Error ? err.message : "Erro desconhecido";
-    
+
     // Handle rate limits and payment errors
     if (message.includes("Rate limit") || message.includes("429")) {
       return new Response(
@@ -321,10 +355,11 @@ Responda APENAS com o JSON, sem explicações.`;
         { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-    
+
     return new Response(
       JSON.stringify({ error: message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
+
