@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
@@ -28,10 +29,62 @@ export interface ChartDataPoint {
   reservas: number;
 }
 
+// Compute totals from transactions
+function computeTotals(transactions: Transaction[]): TransactionTotals {
+  const receitas = transactions
+    .filter((t) => t.tipo === "RECEITA")
+    .reduce((sum, t) => sum + t.valor, 0);
+
+  const despesas = transactions
+    .filter((t) => t.tipo === "DESPESA")
+    .reduce((sum, t) => sum + t.valor, 0);
+
+  const reservas = transactions
+    .filter((t) => t.tipo === "RESERVA")
+    .reduce((sum, t) => sum + t.valor, 0);
+
+  return {
+    receitas,
+    despesas,
+    reservas,
+    saldo: receitas - despesas,
+  };
+}
+
+// Compute chart data from transactions
+function computeChartData(transactions: Transaction[]): ChartDataPoint[] {
+  const sorted = [...transactions].sort(
+    (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+  );
+
+  const groupedData: Record<string, { receitas: number; despesas: number; reservas: number }> = {};
+
+  sorted.forEach((t) => {
+    const date = new Date(t.created_at).toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "short",
+    });
+
+    if (!groupedData[date]) {
+      groupedData[date] = { receitas: 0, despesas: 0, reservas: 0 };
+    }
+
+    if (t.tipo === "RECEITA") groupedData[date].receitas += t.valor;
+    else if (t.tipo === "DESPESA") groupedData[date].despesas += t.valor;
+    else if (t.tipo === "RESERVA") groupedData[date].reservas += t.valor;
+  });
+
+  return Object.entries(groupedData).map(([date, values]) => ({
+    date,
+    ...values,
+  }));
+}
+
 export function useTransactions() {
   const { session } = useAuth();
   const queryClient = useQueryClient();
 
+  // Single query for all transactions
   const transactionsQuery = useQuery({
     queryKey: ["transactions"],
     queryFn: async () => {
@@ -46,74 +99,30 @@ export function useTransactions() {
     enabled: !!session,
   });
 
-  const totalsQuery = useQuery({
-    queryKey: ["transaction-totals"],
-    queryFn: async (): Promise<TransactionTotals> => {
-      const { data, error } = await supabase
-        .from("transactions")
-        .select("valor, tipo");
+  // Real-time subscription for instant UI updates
+  useEffect(() => {
+    if (!session) return;
 
-      if (error) throw error;
-
-      const transactions = data || [];
-      
-      const receitas = transactions
-        .filter((t) => t.tipo === "RECEITA")
-        .reduce((sum, t) => sum + t.valor, 0);
-      
-      const despesas = transactions
-        .filter((t) => t.tipo === "DESPESA")
-        .reduce((sum, t) => sum + t.valor, 0);
-      
-      const reservas = transactions
-        .filter((t) => t.tipo === "RESERVA")
-        .reduce((sum, t) => sum + t.valor, 0);
-
-      return {
-        receitas,
-        despesas,
-        reservas,
-        saldo: receitas - despesas,
-      };
-    },
-    enabled: !!session,
-  });
-
-  const chartDataQuery = useQuery({
-    queryKey: ["chart-data"],
-    queryFn: async (): Promise<ChartDataPoint[]> => {
-      const { data, error } = await supabase
-        .from("transactions")
-        .select("valor, tipo, created_at")
-        .order("created_at", { ascending: true });
-
-      if (error) throw error;
-
-      // Group by date
-      const groupedData: Record<string, { receitas: number; despesas: number; reservas: number }> = {};
-      
-      (data || []).forEach((t) => {
-        const date = new Date(t.created_at).toLocaleDateString("pt-BR", {
-          day: "2-digit",
-          month: "short",
-        });
-        
-        if (!groupedData[date]) {
-          groupedData[date] = { receitas: 0, despesas: 0, reservas: 0 };
+    const channel = supabase
+      .channel("transactions-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "transactions",
+        },
+        () => {
+          // Invalidate and refetch on any change
+          queryClient.invalidateQueries({ queryKey: ["transactions"] });
         }
+      )
+      .subscribe();
 
-        if (t.tipo === "RECEITA") groupedData[date].receitas += t.valor;
-        else if (t.tipo === "DESPESA") groupedData[date].despesas += t.valor;
-        else if (t.tipo === "RESERVA") groupedData[date].reservas += t.valor;
-      });
-
-      return Object.entries(groupedData).map(([date, values]) => ({
-        date,
-        ...values,
-      }));
-    },
-    enabled: !!session,
-  });
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [session, queryClient]);
 
   const processVoiceMutation = useMutation({
     mutationFn: async (audioBase64: string) => {
@@ -123,32 +132,36 @@ export function useTransactions() {
 
       // Handle edge function errors - parse the error context for the actual message
       if (error) {
-        // Try to get the error message from the response body
         const errorContext = (error as any).context;
         if (errorContext) {
           try {
             const errorBody = await errorContext.json();
-            throw new Error(errorBody.error || "Erro ao processar áudio");
+            const errorMessage = errorBody.error || "Erro ao processar áudio";
+            // Check for specific error codes
+            if (errorContext.status === 500) {
+              throw new Error("Serviço temporariamente indisponível. Tente novamente.");
+            }
+            throw new Error(errorMessage);
           } catch (parseError) {
-            // If parsing fails, use the original error
-            throw error;
+            if ((parseError as Error).message.includes("Serviço temporariamente")) {
+              throw parseError;
+            }
+            throw new Error("Erro ao processar áudio");
           }
         }
         throw error;
       }
-      
+
       // Handle errors returned in the data payload
       if (data?.error) {
         throw new Error(data.error);
       }
-      
+
       return data;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["transaction-totals"] });
-      queryClient.invalidateQueries({ queryKey: ["chart-data"] });
-      
+
       if (data.action === "DELETE_LAST") {
         toast.success("Última transação excluída");
       } else if (data.transaction) {
@@ -156,8 +169,44 @@ export function useTransactions() {
       }
     },
     onError: (error: Error) => {
-      // Show friendly error message
+      // Show error in red toast
       toast.error(error.message || "Erro ao processar áudio");
+    },
+  });
+
+  // Manual transaction creation
+  const addTransactionMutation = useMutation({
+    mutationFn: async (transaction: {
+      item: string;
+      valor: number;
+      tipo: "RECEITA" | "DESPESA" | "RESERVA";
+      categoria: string;
+      forma_pagamento?: string;
+    }) => {
+      if (!session?.user?.id) throw new Error("Usuário não autenticado");
+
+      const { data, error } = await supabase
+        .from("transactions")
+        .insert({
+          user_id: session.user.id,
+          item: transaction.item,
+          valor: transaction.valor,
+          tipo: transaction.tipo,
+          categoria: transaction.categoria,
+          forma_pagamento: transaction.forma_pagamento || null,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      toast.success("Transação adicionada!");
+    },
+    onError: () => {
+      toast.error("Erro ao adicionar transação");
     },
   });
 
@@ -172,8 +221,6 @@ export function useTransactions() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["transaction-totals"] });
-      queryClient.invalidateQueries({ queryKey: ["chart-data"] });
       toast.success("Transação excluída");
     },
     onError: () => {
@@ -181,13 +228,20 @@ export function useTransactions() {
     },
   });
 
+  // Derive totals and chart data from the single transactions query
+  const transactions = transactionsQuery.data || [];
+  const totals = computeTotals(transactions);
+  const chartData = computeChartData(transactions);
+
   return {
-    transactions: transactionsQuery.data || [],
-    totals: totalsQuery.data || { receitas: 0, despesas: 0, reservas: 0, saldo: 0 },
-    chartData: chartDataQuery.data || [],
-    isLoading: transactionsQuery.isLoading || totalsQuery.isLoading,
+    transactions,
+    totals,
+    chartData,
+    isLoading: transactionsQuery.isLoading,
     processVoice: processVoiceMutation.mutateAsync,
     isProcessing: processVoiceMutation.isPending,
+    addTransaction: addTransactionMutation.mutate,
+    isAdding: addTransactionMutation.isPending,
     deleteTransaction: deleteTransactionMutation.mutate,
   };
 }

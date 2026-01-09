@@ -4,6 +4,7 @@ import { SummaryCards } from "./SummaryCards";
 import { TransactionChart } from "./TransactionChart";
 import { TransactionsList } from "./TransactionsList";
 import { VoiceRecorder } from "./VoiceRecorder";
+import { AddTransactionForm } from "./AddTransactionForm";
 import { Button } from "@/components/ui/button";
 import { LogOut, Mic } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,6 +18,8 @@ export function Dashboard() {
     isLoading,
     processVoice,
     isProcessing,
+    addTransaction,
+    isAdding,
     deleteTransaction,
   } = useTransactions();
 
@@ -101,6 +104,9 @@ export function Dashboard() {
           </div>
         </div>
       </main>
+
+      {/* Manual Add FAB */}
+      <AddTransactionForm onAdd={addTransaction} isAdding={isAdding} />
 
       {/* Voice Recorder FAB */}
       <VoiceRecorder

@@ -50,9 +50,18 @@ export function TransactionChart({ data }: TransactionChartProps) {
         <CardHeader>
           <CardTitle className="text-foreground">Evolução Financeira</CardTitle>
         </CardHeader>
-        <CardContent className="flex h-[300px] items-center justify-center">
-          <p className="text-muted-foreground">
-            Nenhuma transação registrada ainda. Use o microfone para começar!
+        <CardContent className="flex h-[300px] flex-col items-center justify-center gap-4">
+          <div className="flex gap-3">
+            <div className="h-16 w-1 rounded-full bg-income/30" />
+            <div className="h-12 w-1 rounded-full bg-expense/30" />
+            <div className="h-20 w-1 rounded-full bg-reserve/30" />
+            <div className="h-8 w-1 rounded-full bg-income/30" />
+            <div className="h-14 w-1 rounded-full bg-expense/30" />
+          </div>
+          <p className="text-center text-muted-foreground">
+            Nenhuma transação registrada ainda.
+            <br />
+            <span className="text-sm">Use o microfone ou o botão + para começar!</span>
           </p>
         </CardContent>
       </Card>
