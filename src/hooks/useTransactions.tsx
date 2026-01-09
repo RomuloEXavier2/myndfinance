@@ -121,8 +121,26 @@ export function useTransactions() {
         body: { audioBase64 },
       });
 
-      if (error) throw error;
-      if (data.error) throw new Error(data.error);
+      // Handle edge function errors - parse the error context for the actual message
+      if (error) {
+        // Try to get the error message from the response body
+        const errorContext = (error as any).context;
+        if (errorContext) {
+          try {
+            const errorBody = await errorContext.json();
+            throw new Error(errorBody.error || "Erro ao processar áudio");
+          } catch (parseError) {
+            // If parsing fails, use the original error
+            throw error;
+          }
+        }
+        throw error;
+      }
+      
+      // Handle errors returned in the data payload
+      if (data?.error) {
+        throw new Error(data.error);
+      }
       
       return data;
     },
@@ -138,13 +156,8 @@ export function useTransactions() {
       }
     },
     onError: (error: Error) => {
-      if (error.message.includes("Rate limit") || error.message.includes("429")) {
-        toast.error("Limite de requisições excedido. Tente novamente em alguns segundos.");
-      } else if (error.message.includes("Payment") || error.message.includes("402")) {
-        toast.error("Créditos insuficientes. Por favor, adicione mais créditos.");
-      } else {
-        toast.error(error.message || "Erro ao processar áudio");
-      }
+      // Show friendly error message
+      toast.error(error.message || "Erro ao processar áudio");
     },
   });
 
