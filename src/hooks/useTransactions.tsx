@@ -143,7 +143,7 @@ export function useTransactions() {
             
             // Return specific messages based on status
             if (status === 500) {
-              throw new Error("Serviço temporariamente indisponível. Tente novamente.");
+              throw new Error("Ops! Tivemos um problema ao processar seu áudio. Por favor, tente novamente.");
             }
             if (status === 429) {
               throw new Error("Limite de requisições excedido. Aguarde um momento.");
@@ -182,8 +182,17 @@ export function useTransactions() {
       }
     },
     onError: (error: Error) => {
-      // Show error in red toast
-      toast.error(error.message || "Erro ao processar áudio");
+      // Show professional error messages
+      const message = error.message || "";
+      
+      // Replace legacy "papo furado" with professional message
+      if (message.toLowerCase().includes("furado") || message.toLowerCase().includes("papo")) {
+        toast.error("Nenhuma transação financeira identificada no áudio.");
+      } else if (message.includes("conexão") || message.includes("servidor") || message.includes("500")) {
+        toast.error("Ops! Tivemos um problema ao processar seu áudio. Por favor, tente novamente.");
+      } else {
+        toast.error(message || "Ops! Tivemos um problema ao processar seu áudio. Por favor, tente novamente.");
+      }
     },
   });
 

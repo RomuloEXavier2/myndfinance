@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
-const PAPO_FURADO_MESSAGE = "Papo furado detectado. Por favor, informe um valor financeiro.";
+const NO_FINANCIAL_DATA_MESSAGE = "Nenhuma transação financeira identificada no áudio.";
 
 // Browser records as `audio/webm;codecs=opus`.
 const DEFAULT_AUDIO_MIME = "audio/webm;codecs=opus";
@@ -177,7 +177,7 @@ FORMATO DE RESPOSTA (JSON apenas, sem markdown):
 {"action": "DELETE_LAST"}
 
 3) Erro (APENAS se o texto estiver vazio ou claramente sem relação com dinheiro):
-{"error": "${PAPO_FURADO_MESSAGE}"}`;
+{"error": "${NO_FINANCIAL_DATA_MESSAGE}"}`;
 
     const extractionResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -229,14 +229,9 @@ FORMATO DE RESPOSTA (JSON apenas, sem markdown):
 
     // Check if AI returned an error (invalid financial data)
     if (financialData.error) {
-      const rawMsg = typeof financialData.error === "string" ? financialData.error : "";
-      const normalizedMsg = rawMsg.toLowerCase().includes("furado")
-        ? PAPO_FURADO_MESSAGE
-        : (rawMsg || "Erro ao processar comando de voz.");
-
       return new Response(
         JSON.stringify({
-          error: normalizedMsg,
+          error: NO_FINANCIAL_DATA_MESSAGE,
           transcription: transcribedText
         }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }

@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from "react";
 import { Mic, MicOff, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface VoiceRecorderProps {
   onRecordingComplete: (audioBase64: string) => Promise<void>;
@@ -32,6 +33,13 @@ export function VoiceRecorder({ onRecordingComplete, isProcessing }: VoiceRecord
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(chunksRef.current, { type: "audio/webm" });
         
+        // Validate audio has content (minimum size check ~1KB for actual audio)
+        if (audioBlob.size < 1000) {
+          toast.error("Nenhum som detectado. Verifique seu microfone.");
+          stream.getTracks().forEach((track) => track.stop());
+          return;
+        }
+        
         // Convert to base64
         const reader = new FileReader();
         reader.onloadend = async () => {
@@ -53,6 +61,7 @@ export function VoiceRecorder({ onRecordingComplete, isProcessing }: VoiceRecord
       setIsRecording(true);
     } catch (error) {
       console.error("Error starting recording:", error);
+      toast.error("Não foi possível acessar o microfone. Verifique as permissões.");
     }
   }, [onRecordingComplete]);
 
@@ -80,12 +89,12 @@ export function VoiceRecorder({ onRecordingComplete, isProcessing }: VoiceRecord
       className={cn(
         "fixed bottom-8 right-8 z-50 flex h-16 w-16 items-center justify-center rounded-full shadow-2xl transition-all duration-300",
         isRecording
-          ? "recording bg-expense"
+          ? "recording bg-expense animate-pulse"
           : isProcessing
           ? "bg-muted cursor-not-allowed"
           : "mic-pulse bg-primary hover:scale-105 hover:bg-primary/90"
       )}
-      aria-label={isRecording ? "Stop recording" : "Start recording"}
+      aria-label={isRecording ? "Parar gravação" : "Iniciar gravação"}
     >
       {isProcessing ? (
         <Loader2 className="h-7 w-7 animate-spin text-muted-foreground" />
