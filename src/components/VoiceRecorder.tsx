@@ -4,11 +4,12 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 interface VoiceRecorderProps {
-  onRecordingComplete: (audioBase64: string) => Promise<void>;
+  onRecordingComplete: (audioBase64: string) => Promise<unknown>;
   isProcessing: boolean;
+  lastTranscription?: string;
 }
 
-export function VoiceRecorder({ onRecordingComplete, isProcessing }: VoiceRecorderProps) {
+export function VoiceRecorder({ onRecordingComplete, isProcessing, lastTranscription }: VoiceRecorderProps) {
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -83,26 +84,36 @@ export function VoiceRecorder({ onRecordingComplete, isProcessing }: VoiceRecord
   };
 
   return (
-    <button
-      onClick={handleClick}
-      disabled={isProcessing}
-      className={cn(
-        "fixed bottom-8 right-8 z-50 flex h-16 w-16 items-center justify-center rounded-full shadow-2xl transition-all duration-300",
-        isRecording
-          ? "recording bg-expense animate-pulse"
-          : isProcessing
-          ? "bg-muted cursor-not-allowed"
-          : "mic-pulse bg-primary hover:scale-105 hover:bg-primary/90"
+    <div className="fixed bottom-8 right-8 z-50 flex flex-col items-end gap-2">
+      {/* Debug transcription label */}
+      {lastTranscription && (
+        <div className="max-w-[200px] rounded-lg bg-card/90 px-3 py-2 text-xs text-muted-foreground shadow-lg backdrop-blur-sm border border-border">
+          <span className="font-medium text-foreground">IA ouviu:</span>{" "}
+          <span className="italic">"{lastTranscription}"</span>
+        </div>
       )}
-      aria-label={isRecording ? "Parar gravação" : "Iniciar gravação"}
-    >
-      {isProcessing ? (
-        <Loader2 className="h-7 w-7 animate-spin text-muted-foreground" />
-      ) : isRecording ? (
-        <MicOff className="h-7 w-7 text-expense-foreground" />
-      ) : (
-        <Mic className="h-7 w-7 text-primary-foreground" />
-      )}
-    </button>
+      
+      <button
+        onClick={handleClick}
+        disabled={isProcessing}
+        className={cn(
+          "flex h-16 w-16 items-center justify-center rounded-full shadow-2xl transition-all duration-300",
+          isRecording
+            ? "recording bg-expense animate-pulse"
+            : isProcessing
+            ? "bg-muted cursor-not-allowed"
+            : "mic-pulse bg-primary hover:scale-105 hover:bg-primary/90"
+        )}
+        aria-label={isRecording ? "Parar gravação" : "Iniciar gravação"}
+      >
+        {isProcessing ? (
+          <Loader2 className="h-7 w-7 animate-spin text-muted-foreground" />
+        ) : isRecording ? (
+          <MicOff className="h-7 w-7 text-expense-foreground" />
+        ) : (
+          <Mic className="h-7 w-7 text-primary-foreground" />
+        )}
+      </button>
+    </div>
   );
 }
