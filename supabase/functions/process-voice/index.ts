@@ -156,31 +156,29 @@ serve(async (req) => {
     console.log("Audio Input Format:", audioFormat, "| MIME:", audioMimeType);
     console.log("Transcribed Text:", transcribedText);
 
-    // Step 2: Extract financial data (HIGHLY flexible extraction)
-    const extractionSystemPrompt = `Você é um extrator de transações financeiras ALTAMENTE FLEXÍVEL em português brasileiro.
+    // Step 2: Extract financial data (EXTREMELY flexible extraction)
+    const extractionSystemPrompt = `Você é um assistente financeiro EXTREMAMENTE FLEXÍVEL. Sua missão é ENCONTRAR transações a qualquer custo.
 
-SEJA EXTREMAMENTE FLEXÍVEL:
-- Mesmo que a transcrição esteja bagunçada, com ruído, ou parcialmente incompreensível, se houver UM NÚMERO e QUALQUER INTENÇÃO FINANCEIRA (pagar, gastar, receber, guardar, comprar, vender, investir, sacar, depositar, etc), EXTRAIA.
-- Palavras-chave que indicam transação: gastei, paguei, comprei, recebi, ganhei, vendi, guardei, investi, depositei, saquei, transferi, emprestei, devo, custou, custa, preço, valor, reais, R$, dinheiro, salário, renda, conta, boleto, parcela.
-- Converta valores por extenso para número: "cinquenta" → 50, "três mil" → 3000, "duzentos e cinquenta" → 250.
-- Se houver valor mas o tipo não estiver 100% explícito, INFIRA pelo contexto. Na dúvida entre tipos, use DESPESA.
-- Se a categoria não estiver clara, use "Outros" (NUNCA retorne erro por categoria).
+REGRA DE OURO: Se existe um VALOR (número) e um ITEM (qualquer coisa), isso É uma transação. Extraia sempre.
 
-REGRAS DE EXTRAÇÃO:
-- Priorize encontrar o valor numérico a qualquer custo.
-- Se o texto mencionar qualquer forma de movimentação de dinheiro + número, considere válido.
-- Apenas retorne erro se o texto estiver COMPLETAMENTE vazio OU se não houver absolutamente NENHUM número NEM intenção financeira.
+SEJA ULTRA-FLEXÍVEL:
+- Transcrições curtas, bagunçadas, com ruído? NÃO IMPORTA. Se tem número + algo, extraia.
+- "Cinquenta mercado" → {"item": "mercado", "valor": 50, "tipo": "DESPESA", "categoria": "Alimentação"}
+- "Recebi 3000" → {"item": "receita", "valor": 3000, "tipo": "RECEITA", "categoria": "Outros"}
+- "200 luz" → {"item": "luz", "valor": 200, "tipo": "DESPESA", "categoria": "Contas"}
+- Converta valores por extenso: "cinquenta" → 50, "três mil" → 3000, "duzentos e cinquenta" → 250.
+- Palavras que indicam transação: gastei, paguei, comprei, recebi, ganhei, vendi, guardei, investi, depositei, saquei, transferi, emprestei, devo, custou, custa, preço, valor, reais, R$, dinheiro, salário.
 
-FORMATO DE RESPOSTA (JSON apenas, sem markdown):
+INFERÊNCIA INTELIGENTE:
+- Sem tipo explícito? Use DESPESA (mais comum).
+- Sem categoria? Use "Outros".
+- Sem forma de pagamento? Use null.
+- Tem número mas descrição vaga? Invente algo genérico como "compra" ou "pagamento".
 
-1) Transação válida:
-{"item": "descrição", "valor": numero_sem_simbolo, "tipo": "RECEITA|DESPESA|RESERVA", "categoria": "Outros|...", "forma_pagamento": "método ou null"}
-
-2) Comando de deletar ("apagar/deletar/remover" + "último/última"):
-{"action": "DELETE_LAST"}
-
-3) Erro (SOMENTE se texto vazio ou ZERO relação com dinheiro):
-{"error": "${NO_FINANCIAL_DATA_MESSAGE}"}`;
+FORMATO JSON (sem markdown):
+1) Transação: {"item": "desc", "valor": numero, "tipo": "RECEITA|DESPESA|RESERVA", "categoria": "...", "forma_pagamento": "..."}
+2) Deletar: {"action": "DELETE_LAST"} (se mencionar "apagar/deletar/remover último")
+3) Erro: {"error": "${NO_FINANCIAL_DATA_MESSAGE}"} (SOMENTE se ZERO números E ZERO intenção financeira)`;
 
     const extractionResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

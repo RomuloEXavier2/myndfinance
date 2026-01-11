@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/carousel";
 import { TransactionChart } from "./TransactionChart";
 import { CategoryPieChart } from "./CategoryPieChart";
+import { PaymentMethodsChart } from "./PaymentMethodsChart";
 import type { ChartDataPoint, Transaction } from "@/hooks/useTransactions";
 
 interface ChartCarouselProps {
@@ -29,6 +30,9 @@ export function ChartCarousel({ chartData, transactions }: ChartCarouselProps) {
         </CarouselItem>
         <CarouselItem className="pl-2 md:pl-4">
           <CategoryPieChart transactions={transactions} />
+        </CarouselItem>
+        <CarouselItem className="pl-2 md:pl-4">
+          <PaymentMethodsChart transactions={transactions} />
         </CarouselItem>
       </CarouselContent>
       <div className="mt-4 flex justify-center gap-2">

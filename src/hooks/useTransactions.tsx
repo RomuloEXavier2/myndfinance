@@ -208,9 +208,14 @@ export function useTransactions() {
         displayMessage = "Ops! Tivemos um problema ao processar seu áudio. Por favor, tente novamente.";
       }
       
-      // Show transcription in the error if available
-      if (transcription && displayMessage.includes("Nenhuma transação")) {
-        toast.error(`${displayMessage}\n\nIA ouviu: "${transcription}"`);
+      // User-friendly hint when AI fails to understand
+      if (displayMessage.includes("Nenhuma transação") || displayMessage.includes("Não entendi")) {
+        const hint = "Não entendi bem o valor. Tente falar: 'Gastei X com Y'";
+        if (transcription) {
+          toast.error(`${hint}\n\nIA ouviu: "${transcription}"`);
+        } else {
+          toast.error(hint);
+        }
       } else {
         toast.error(displayMessage);
       }
