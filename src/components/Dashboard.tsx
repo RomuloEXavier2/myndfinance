@@ -1,7 +1,8 @@
+import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTransactions } from "@/hooks/useTransactions";
 import { SummaryCards } from "./SummaryCards";
-import { TransactionChart } from "./TransactionChart";
+import { ChartCarousel } from "./ChartCarousel";
 import { TransactionsList } from "./TransactionsList";
 import { VoiceRecorder } from "./VoiceRecorder";
 import { AddTransactionForm } from "./AddTransactionForm";
@@ -22,6 +23,23 @@ export function Dashboard() {
     isAdding,
     deleteTransaction,
   } = useTransactions();
+  
+  const [lastTranscription, setLastTranscription] = useState<string>("");
+  
+  const handleVoiceComplete = async (audioBase64: string) => {
+    try {
+      const result = await processVoice(audioBase64);
+      if (result?.transcription) {
+        setLastTranscription(result.transcription);
+      }
+    } catch (error: any) {
+      // Capture transcription from error if available
+      if (error?.transcription) {
+        setLastTranscription(error.transcription);
+      }
+      throw error;
+    }
+  };
 
   if (isLoading) {
     return (
@@ -74,14 +92,14 @@ export function Dashboard() {
         {/* Summary Cards */}
         <SummaryCards totals={totals} />
 
-        {/* Chart and Transactions Grid */}
-        <div className="grid gap-6 lg:grid-cols-2">
-          <TransactionChart data={chartData} />
-          <TransactionsList
-            transactions={transactions}
-            onDelete={deleteTransaction}
-          />
-        </div>
+        {/* Chart Carousel */}
+        <ChartCarousel chartData={chartData} transactions={transactions} />
+
+        {/* Transactions List */}
+        <TransactionsList
+          transactions={transactions}
+          onDelete={deleteTransaction}
+        />
 
         {/* Voice Instructions */}
         <div className="fade-in rounded-xl border border-border bg-card/50 p-6 text-center" style={{ animationDelay: "600ms" }}>
@@ -108,10 +126,11 @@ export function Dashboard() {
       {/* Manual Add FAB */}
       <AddTransactionForm onAdd={addTransaction} isAdding={isAdding} />
 
-      {/* Voice Recorder FAB */}
+      {/* Voice Recorder FAB with Debug Label */}
       <VoiceRecorder
-        onRecordingComplete={processVoice}
+        onRecordingComplete={handleVoiceComplete}
         isProcessing={isProcessing}
+        lastTranscription={lastTranscription}
       />
     </div>
   );

@@ -125,7 +125,12 @@ export function useTransactions() {
   }, [session, queryClient]);
 
   const processVoiceMutation = useMutation({
-    mutationFn: async (audioBase64: string) => {
+    mutationFn: async (audioBase64: string): Promise<{ 
+      action?: string; 
+      transaction?: Transaction; 
+      message?: string; 
+      transcription?: string;
+    }> => {
       const { data, error } = await supabase.functions.invoke("process-voice", {
         body: { audioBase64 },
       });
@@ -140,10 +145,13 @@ export function useTransactions() {
           try {
             const errorBody = await errorContext.json();
             const errorMessage = errorBody.error || "Erro ao processar áudio";
+            const transcription = errorBody.transcription || "";
             
             // Return specific messages based on status
             if (status === 500) {
-              throw new Error("Ops! Tivemos um problema ao processar seu áudio. Por favor, tente novamente.");
+              const err = new Error("Ops! Tivemos um problema ao processar seu áudio. Por favor, tente novamente.");
+              (err as any).transcription = transcription;
+              throw err;
             }
             if (status === 429) {
               throw new Error("Limite de requisições excedido. Aguarde um momento.");
@@ -152,7 +160,10 @@ export function useTransactions() {
               throw new Error("Créditos insuficientes. Contate o suporte.");
             }
             
-            throw new Error(errorMessage);
+            // Attach transcription to error for display
+            const customError = new Error(errorMessage);
+            (customError as any).transcription = transcription;
+            throw customError;
           } catch (parseError) {
             // If it's our own thrown error, re-throw it
             if (parseError instanceof Error && parseError.message !== "Unexpected end of JSON input") {
@@ -167,7 +178,9 @@ export function useTransactions() {
 
       // Handle errors returned in the data payload
       if (data?.error) {
-        throw new Error(data.error);
+        const customError = new Error(data.error);
+        (customError as any).transcription = data.transcription || "";
+        throw customError;
       }
 
       return data;
@@ -181,17 +194,25 @@ export function useTransactions() {
         toast.success(data.message || "Transação registrada!");
       }
     },
-    onError: (error: Error) => {
-      // Show professional error messages
+    onError: (error: Error & { transcription?: string }) => {
       const message = error.message || "";
+      const transcription = error.transcription || "";
+      
+      // Build error message with transcription if available
+      let displayMessage = message || "Ops! Tivemos um problema ao processar seu áudio. Por favor, tente novamente.";
       
       // Replace legacy "papo furado" with professional message
       if (message.toLowerCase().includes("furado") || message.toLowerCase().includes("papo")) {
-        toast.error("Nenhuma transação financeira identificada no áudio.");
+        displayMessage = "Nenhuma transação financeira identificada no áudio.";
       } else if (message.includes("conexão") || message.includes("servidor") || message.includes("500")) {
-        toast.error("Ops! Tivemos um problema ao processar seu áudio. Por favor, tente novamente.");
+        displayMessage = "Ops! Tivemos um problema ao processar seu áudio. Por favor, tente novamente.";
+      }
+      
+      // Show transcription in the error if available
+      if (transcription && displayMessage.includes("Nenhuma transação")) {
+        toast.error(`${displayMessage}\n\nIA ouviu: "${transcription}"`);
       } else {
-        toast.error(message || "Ops! Tivemos um problema ao processar seu áudio. Por favor, tente novamente.");
+        toast.error(displayMessage);
       }
     },
   });

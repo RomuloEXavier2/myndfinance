@@ -156,17 +156,20 @@ serve(async (req) => {
     console.log("Audio Input Format:", audioFormat, "| MIME:", audioMimeType);
     console.log("Transcribed Text:", transcribedText);
 
-    // Step 2: Extract financial data (flexible, but still safe)
-    const extractionSystemPrompt = `Você é um extrator de transações financeiras em português brasileiro.
+    // Step 2: Extract financial data (HIGHLY flexible extraction)
+    const extractionSystemPrompt = `Você é um extrator de transações financeiras ALTAMENTE FLEXÍVEL em português brasileiro.
 
-Seja FLEXÍVEL:
-- Se a transcrição estiver um pouco bagunçada, mas indicar intenção financeira e contiver um valor (em dígitos OU por extenso), extraia.
-- Converta valores por extenso (ex.: "cinquenta", "três mil") para número.
-- Se houver valor mas o tipo não estiver explícito, infira pelo contexto; se ainda ficar ambíguo, use DESPESA como padrão.
+SEJA EXTREMAMENTE FLEXÍVEL:
+- Mesmo que a transcrição esteja bagunçada, com ruído, ou parcialmente incompreensível, se houver UM NÚMERO e QUALQUER INTENÇÃO FINANCEIRA (pagar, gastar, receber, guardar, comprar, vender, investir, sacar, depositar, etc), EXTRAIA.
+- Palavras-chave que indicam transação: gastei, paguei, comprei, recebi, ganhei, vendi, guardei, investi, depositei, saquei, transferi, emprestei, devo, custou, custa, preço, valor, reais, R$, dinheiro, salário, renda, conta, boleto, parcela.
+- Converta valores por extenso para número: "cinquenta" → 50, "três mil" → 3000, "duzentos e cinquenta" → 250.
+- Se houver valor mas o tipo não estiver 100% explícito, INFIRA pelo contexto. Na dúvida entre tipos, use DESPESA.
+- Se a categoria não estiver clara, use "Outros" (NUNCA retorne erro por categoria).
 
-Regras:
-- Não invente valores; se não houver valor identificável, retorne erro.
-- Categoria: se não tiver certeza, use "Outros" (não trate isso como erro).
+REGRAS DE EXTRAÇÃO:
+- Priorize encontrar o valor numérico a qualquer custo.
+- Se o texto mencionar qualquer forma de movimentação de dinheiro + número, considere válido.
+- Apenas retorne erro se o texto estiver COMPLETAMENTE vazio OU se não houver absolutamente NENHUM número NEM intenção financeira.
 
 FORMATO DE RESPOSTA (JSON apenas, sem markdown):
 
@@ -176,7 +179,7 @@ FORMATO DE RESPOSTA (JSON apenas, sem markdown):
 2) Comando de deletar ("apagar/deletar/remover" + "último/última"):
 {"action": "DELETE_LAST"}
 
-3) Erro (APENAS se o texto estiver vazio ou claramente sem relação com dinheiro):
+3) Erro (SOMENTE se texto vazio ou ZERO relação com dinheiro):
 {"error": "${NO_FINANCIAL_DATA_MESSAGE}"}`;
 
     const extractionResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
