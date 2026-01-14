@@ -6,6 +6,7 @@ import { ChartCarousel } from "./ChartCarousel";
 import { TransactionsList } from "./TransactionsList";
 import { VoiceRecorder } from "./VoiceRecorder";
 import { AddTransactionForm } from "./AddTransactionForm";
+import { ConnectBankButton } from "./ConnectBankButton";
 import { Button } from "@/components/ui/button";
 import { LogOut, Mic } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -76,14 +77,17 @@ export function Dashboard() {
               </p>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={signOut}
-            className="h-10 w-10 rounded-full"
-          >
-            <LogOut className="h-5 w-5" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <ConnectBankButton />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={signOut}
+              className="h-10 w-10 rounded-full"
+            >
+              <LogOut className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
       </header>
 
