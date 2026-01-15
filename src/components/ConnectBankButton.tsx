@@ -44,18 +44,53 @@ export function ConnectBankButton() {
     }
   };
 
-  const handleSuccess = (itemData: any) => {
+  const handleSuccess = async (itemData: any) => {
     console.log("Bank connected successfully:", itemData);
     setConnectToken(null);
     
-    toast({
-      title: "Banco conectado!",
-      description: "Suas transações serão sincronizadas automaticamente.",
-    });
+    const itemId = itemData?.item?.id;
+    
+    if (itemId) {
+      toast({
+        title: "Banco conectado!",
+        description: "Sincronizando seus dados financeiros...",
+      });
 
-    // Invalidate queries to refresh data immediately
+      try {
+        // Call sync function to fetch all data immediately
+        const { data, error } = await supabase.functions.invoke("sync-bank-data", {
+          body: { itemId },
+        });
+
+        if (error) {
+          console.error("Sync error:", error);
+          toast({
+            title: "Aviso",
+            description: "Banco conectado, mas houve um problema na sincronização inicial. Os dados serão sincronizados em breve.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Sincronização concluída!",
+            description: `${data?.synced?.accounts || 0} contas, ${data?.synced?.creditCards || 0} cartões, ${data?.synced?.investments || 0} investimentos sincronizados.`,
+          });
+        }
+      } catch (e) {
+        console.error("Sync call error:", e);
+      }
+    } else {
+      toast({
+        title: "Banco conectado!",
+        description: "Suas transações serão sincronizadas automaticamente.",
+      });
+    }
+
+    // Invalidate all finance queries to refresh data immediately
     queryClient.invalidateQueries({ queryKey: ["transactions"] });
     queryClient.invalidateQueries({ queryKey: ["bank-accounts"] });
+    queryClient.invalidateQueries({ queryKey: ["credit-cards"] });
+    queryClient.invalidateQueries({ queryKey: ["loans"] });
+    queryClient.invalidateQueries({ queryKey: ["investments"] });
   };
 
   const handleError = (error: any) => {

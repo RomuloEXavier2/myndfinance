@@ -14,6 +14,138 @@ export type Database = {
   }
   public: {
     Tables: {
+      credit_cards: {
+        Row: {
+          bank_name: string
+          card_name: string | null
+          closing_date: string | null
+          created_at: string
+          current_bill: number | null
+          due_date: string | null
+          id: string
+          limit_available: number | null
+          limit_total: number | null
+          pluggy_card_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bank_name: string
+          card_name?: string | null
+          closing_date?: string | null
+          created_at?: string
+          current_bill?: number | null
+          due_date?: string | null
+          id?: string
+          limit_available?: number | null
+          limit_total?: number | null
+          pluggy_card_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bank_name?: string
+          card_name?: string | null
+          closing_date?: string | null
+          created_at?: string
+          current_bill?: number | null
+          due_date?: string | null
+          id?: string
+          limit_available?: number | null
+          limit_total?: number | null
+          pluggy_card_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      investments: {
+        Row: {
+          annual_rate: number | null
+          bank_name: string
+          created_at: string
+          currency: string | null
+          id: string
+          investment_type: string | null
+          name: string | null
+          pluggy_investment_id: string | null
+          total_saved: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          annual_rate?: number | null
+          bank_name: string
+          created_at?: string
+          currency?: string | null
+          id?: string
+          investment_type?: string | null
+          name?: string | null
+          pluggy_investment_id?: string | null
+          total_saved?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          annual_rate?: number | null
+          bank_name?: string
+          created_at?: string
+          currency?: string | null
+          id?: string
+          investment_type?: string | null
+          name?: string | null
+          pluggy_investment_id?: string | null
+          total_saved?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      loans: {
+        Row: {
+          amount_available: number | null
+          amount_taken: number | null
+          bank_name: string
+          created_at: string
+          due_date: string | null
+          id: string
+          interest_rate: number | null
+          loan_type: string | null
+          monthly_payment: number | null
+          pluggy_loan_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_available?: number | null
+          amount_taken?: number | null
+          bank_name: string
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          interest_rate?: number | null
+          loan_type?: string | null
+          monthly_payment?: number | null
+          pluggy_loan_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_available?: number | null
+          amount_taken?: number | null
+          bank_name?: string
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          interest_rate?: number | null
+          loan_type?: string | null
+          monthly_payment?: number | null
+          pluggy_loan_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       transactions: {
         Row: {
           categoria: string
