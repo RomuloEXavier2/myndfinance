@@ -1,10 +1,16 @@
 import { useState } from "react";
 import { PluggyConnect } from "react-pluggy-connect";
 import { Button } from "@/components/ui/button";
-import { Landmark, Loader2, ShieldCheck } from "lucide-react";
+import { Landmark, Loader2, ShieldCheck, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export function ConnectBankButton() {
   const [connectToken, setConnectToken] = useState<string | null>(null);
@@ -89,20 +95,25 @@ export function ConnectBankButton() {
         </div>
       </div>
 
-      {connectToken && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="relative w-full max-w-lg h-[80vh] min-h-[600px] bg-background rounded-xl shadow-2xl overflow-hidden">
-            <PluggyConnect
-              connectToken={connectToken}
-              onSuccess={handleSuccess}
-              onError={handleError}
-              onClose={handleClose}
-              includeSandbox={true}
-              language="pt"
-            />
+      <Dialog open={!!connectToken} onOpenChange={(open) => !open && handleClose()}>
+        <DialogContent className="max-w-[95vw] sm:max-w-[500px] h-[90vh] sm:h-[80vh] min-h-[600px] p-0 overflow-hidden">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Conectar Conta Bancária</DialogTitle>
+          </DialogHeader>
+          <div className="relative w-full h-full overflow-y-auto [&_iframe]:!w-full [&_iframe]:!h-full [&_iframe]:!min-h-[550px]">
+            {connectToken && (
+              <PluggyConnect
+                connectToken={connectToken}
+                onSuccess={handleSuccess}
+                onError={handleError}
+                onClose={handleClose}
+                includeSandbox={true}
+                language="pt"
+              />
+            )}
           </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
