@@ -7,9 +7,20 @@ import { TransactionsList } from "./TransactionsList";
 import { VoiceRecorder } from "./VoiceRecorder";
 import { AddTransactionForm } from "./AddTransactionForm";
 import { ConnectBankButton } from "./ConnectBankButton";
+import { FinanceOverview } from "./FinanceOverview";
+import { BankAccountsList } from "./BankAccountsList";
+import { DeleteAccountButton } from "./DeleteAccountButton";
 import { Button } from "@/components/ui/button";
-import { LogOut, Mic } from "lucide-react";
+import { LogOut, Mic, Settings } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 export function Dashboard() {
   const { user, signOut } = useAuth();
@@ -79,6 +90,38 @@ export function Dashboard() {
           </div>
           <div className="flex items-center gap-2">
             <ConnectBankButton />
+            
+            {/* Settings Sheet */}
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-10 w-10 rounded-full"
+                >
+                  <Settings className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent className="overflow-y-auto">
+                <SheetHeader>
+                  <SheetTitle>Configurações</SheetTitle>
+                  <SheetDescription>
+                    Gerencie suas conexões bancárias e conta
+                  </SheetDescription>
+                </SheetHeader>
+                <div className="mt-6 space-y-6">
+                  <BankAccountsList />
+                  
+                  <div className="pt-6 border-t">
+                    <h3 className="text-sm font-medium text-destructive mb-4">
+                      Zona de Perigo
+                    </h3>
+                    <DeleteAccountButton />
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
+            
             <Button
               variant="ghost"
               size="icon"
@@ -95,6 +138,9 @@ export function Dashboard() {
       <main className="mx-auto max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8">
         {/* Summary Cards */}
         <SummaryCards totals={totals} />
+
+        {/* Open Finance Overview */}
+        <FinanceOverview />
 
         {/* Chart Carousel */}
         <ChartCarousel chartData={chartData} transactions={transactions} />
