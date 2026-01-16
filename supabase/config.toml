@@ -2,3 +2,21 @@ project_id = "fnrspnwonntcamvtghkp"
 
 [functions.process-voice]
 verify_jwt = false
+
+[functions.pluggy-webhook]
+verify_jwt = false
+
+[functions.sync-bank-data]
+verify_jwt = false
+
+[functions.disconnect-bank]
+verify_jwt = false
+
+[functions.delete-user-account]
+verify_jwt = false
+
+[functions.pluggy-connect-token]
+verify_jwt = false
+
+[functions.recategorize-transactions]
+verify_jwt = false
