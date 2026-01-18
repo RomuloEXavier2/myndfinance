@@ -16,6 +16,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { ConnectBankButton } from "./ConnectBankButton";
 import { BankAccountsList } from "./BankAccountsList";
 import { DeleteAccountButton } from "./DeleteAccountButton";
+import { SyncLogsModal } from "./SyncLogsModal";
 import { useTheme } from "next-themes";
 import {
   Sidebar,
@@ -203,6 +204,12 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
               <div className="space-y-4">
                 <h3 className="text-sm font-medium">Desconectar Bancos</h3>
                 <BankAccountsList />
+              </div>
+
+              {/* Sync Logs */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-medium">Diagnóstico</h3>
+                <SyncLogsModal />
               </div>
               
               {/* Danger Zone */}

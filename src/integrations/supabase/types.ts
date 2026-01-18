@@ -59,6 +59,39 @@ export type Database = {
         }
         Relationships: []
       }
+      debug_logs: {
+        Row: {
+          created_at: string
+          details: Json | null
+          function_name: string
+          id: string
+          level: string
+          message: string
+          stage: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          function_name: string
+          id?: string
+          level?: string
+          message: string
+          stage: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          function_name?: string
+          id?: string
+          level?: string
+          message?: string
+          stage?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       investments: {
         Row: {
           annual_rate: number | null
