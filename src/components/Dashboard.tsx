@@ -129,20 +129,21 @@ export function Dashboard() {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
+      <div className="min-h-screen flex w-full bg-background overflow-x-hidden">
         {/* Desktop Sidebar */}
         <div className="hidden md:block">
           <AppSidebar activeTab={activeTab} onTabChange={setActiveTab} />
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 flex flex-col min-w-0">
-          {/* Mobile Header */}
+        <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
+          {/* Mobile Header with Sidebar Trigger */}
           <header className="border-b border-border bg-card/50 backdrop-blur-sm md:hidden">
             <div className="flex items-center justify-between px-4 py-3">
               <div className="flex items-center gap-3">
+                <SidebarTrigger className="shrink-0" />
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary">
-                  <Mic className="h-4 w-4 text-primary-foreground" />
+                  <span className="text-sm font-bold text-primary-foreground">M</span>
                 </div>
                 <h1 className="text-lg font-bold text-foreground">MYND CFO</h1>
               </div>
@@ -154,14 +155,14 @@ export function Dashboard() {
             <SidebarTrigger className="mr-4" />
             <div className="flex items-center gap-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary">
-                <Mic className="h-4 w-4 text-primary-foreground" />
+                <span className="text-sm font-bold text-primary-foreground">M</span>
               </div>
               <h1 className="text-lg font-bold text-foreground">MYND CFO</h1>
             </div>
           </header>
 
           {/* Page Content */}
-          <main className="flex-1 overflow-y-auto pb-24 md:pb-6">
+          <main className="flex-1 overflow-y-auto overflow-x-hidden pb-24 md:pb-6">
             <div className="mx-auto max-w-4xl space-y-4 sm:space-y-6 px-4 py-4 sm:py-6">
               {/* Page Title */}
               <div className="flex items-center justify-between">
@@ -176,6 +177,11 @@ export function Dashboard() {
               {renderContent()}
             </div>
           </main>
+        </div>
+
+        {/* Mobile Sidebar (Sheet) */}
+        <div className="md:hidden">
+          <AppSidebar activeTab={activeTab} onTabChange={setActiveTab} />
         </div>
 
         {/* Mobile Bottom Navigation */}
@@ -196,3 +202,4 @@ export function Dashboard() {
     </SidebarProvider>
   );
 }
+

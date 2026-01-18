@@ -139,11 +139,12 @@ async function syncTransactions(supabase: any, apiKey: string, accountId: string
   const transactionsData = await transactionsResponse.json();
 
   for (const tx of transactionsData.results || []) {
-    // Map Pluggy transaction to our schema
-    const tipo = tx.amount > 0 ? "RECEITA" : "DESPESA";
+    // FIXED: Positive amount from Pluggy = RECEITA, Negative = DESPESA
+    // Pluggy returns positive for credits (income) and negative for debits (expenses)
+    const tipo = tx.amount >= 0 ? "RECEITA" : "DESPESA";
     const valor = Math.abs(tx.amount);
     const item = tx.description || tx.descriptionRaw || "Transação bancária";
-    const categoria = mapCategory(tx.category || "");
+    const categoria = smartCategorize(item, tx.category || "");
 
     // Check if transaction already exists (avoid duplicates)
     const { data: existing } = await supabase
@@ -171,13 +172,82 @@ async function syncTransactions(supabase: any, apiKey: string, accountId: string
       if (insertError) {
         console.error("Error inserting transaction:", insertError);
       } else {
-        console.log(`Inserted transaction: ${item} - R$ ${valor}`);
+        console.log(`Inserted transaction: ${item} - R$ ${valor} (${tipo})`);
       }
     }
   }
 }
 
-function mapCategory(pluggyCategory: string): string {
+// Smart categorization based on description patterns
+function smartCategorize(description: string, pluggyCategory: string): string {
+  const desc = description.toUpperCase();
+
+  // Food & Delivery patterns
+  if (desc.includes("IFOOD") || desc.includes("IFD*") || desc.includes("RAPPI") || 
+      desc.includes("UBER EATS") || desc.includes("ZDELIVERY")) {
+    return "Alimentação";
+  }
+
+  // Transport patterns
+  if (desc.includes("UBER") || desc.includes("99") || desc.includes("CABIFY") || 
+      desc.includes("LYFT") || desc.includes("POSTO") || desc.includes("SHELL") ||
+      desc.includes("IPIRANGA") || desc.includes("BR MANIA")) {
+    return "Transporte";
+  }
+
+  // Supermarkets
+  if (desc.includes("CARREFOUR") || desc.includes("PAO DE ACUCAR") || 
+      desc.includes("EXTRA") || desc.includes("ASSAI") || desc.includes("ATACADAO") ||
+      desc.includes("BIG") || desc.includes("WALMART") || desc.includes("SUPERMERCADO")) {
+    return "Alimentação";
+  }
+
+  // Streaming & Entertainment
+  if (desc.includes("NETFLIX") || desc.includes("SPOTIFY") || desc.includes("AMAZON PRIME") ||
+      desc.includes("DISNEY") || desc.includes("HBO") || desc.includes("GLOBOPLAY") ||
+      desc.includes("YOUTUBE") || desc.includes("APPLE.COM")) {
+    return "Lazer";
+  }
+
+  // E-commerce
+  if (desc.includes("AMAZON") || desc.includes("MERCADO LIVRE") || desc.includes("MAGAZINELUIZA") ||
+      desc.includes("AMERICANAS") || desc.includes("SHOPEE") || desc.includes("ALIEXPRESS")) {
+    return "Compras";
+  }
+
+  // Bills & Utilities
+  if (desc.includes("ENEL") || desc.includes("CPFL") || desc.includes("SABESP") ||
+      desc.includes("COMGAS") || desc.includes("VIVO") || desc.includes("CLARO") ||
+      desc.includes("TIM") || desc.includes("OI") || desc.includes("NET")) {
+    return "Utilidades";
+  }
+
+  // Health
+  if (desc.includes("DROGASIL") || desc.includes("DROGA RAIA") || desc.includes("PACHECO") ||
+      desc.includes("DROGARIA") || desc.includes("FARMACIA") || desc.includes("HOSPITAL") ||
+      desc.includes("CLINICA") || desc.includes("MEDICO")) {
+    return "Saúde";
+  }
+
+  // Education
+  if (desc.includes("ALURA") || desc.includes("UDEMY") || desc.includes("COURSERA") ||
+      desc.includes("FACULDADE") || desc.includes("UNIVERSIDADE") || desc.includes("ESCOLA")) {
+    return "Educação";
+  }
+
+  // Salary patterns
+  if (desc.includes("SALARIO") || desc.includes("PAGAMENTO") || desc.includes("FOLHA") ||
+      desc.includes("REMUNERACAO") || desc.includes("PRO-LABORE")) {
+    return "Salário";
+  }
+
+  // Transfer patterns
+  if (desc.includes("PIX") || desc.includes("TED") || desc.includes("DOC") ||
+      desc.includes("TRANSF")) {
+    return "Transferências";
+  }
+
+  // Fall back to Pluggy category mapping
   const categoryMap: Record<string, string> = {
     "FOOD": "Alimentação",
     "TRANSPORT": "Transporte",

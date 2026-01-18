@@ -1,4 +1,4 @@
-import { TrendingUp, TrendingDown, Wallet, PiggyBank, Building2 } from "lucide-react";
+import { TrendingUp, TrendingDown, PiggyBank, Building2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { TransactionTotals } from "@/hooks/useTransactions";
@@ -16,13 +16,10 @@ export function SummaryCards({ totals, bankBalance = 0 }: SummaryCardsProps) {
     }).format(value);
   };
 
-  // Use bank balance as primary balance if available, otherwise use calculated
-  const displayBalance = bankBalance > 0 ? bankBalance : totals.saldo;
-  const hasRealBalance = bankBalance > 0;
-
+  // Always show real bank balance as primary metric
   const cards = [
-    // Primary: Real Bank Balance (if connected)
-    ...(hasRealBalance ? [{
+    // Primary: Real Bank Balance (always shown, sum of all accounts)
+    {
       title: "Saldo Real",
       value: bankBalance,
       icon: Building2,
@@ -30,14 +27,14 @@ export function SummaryCards({ totals, bankBalance = 0 }: SummaryCardsProps) {
       iconColor: "text-primary-foreground",
       delay: "0ms",
       isPrimary: true,
-    }] : []),
+    },
     {
       title: "Receitas",
       value: totals.receitas,
       icon: TrendingUp,
       gradient: "gradient-income",
       iconColor: "text-income-foreground",
-      delay: hasRealBalance ? "100ms" : "0ms",
+      delay: "100ms",
     },
     {
       title: "Despesas",
@@ -45,7 +42,7 @@ export function SummaryCards({ totals, bankBalance = 0 }: SummaryCardsProps) {
       icon: TrendingDown,
       gradient: "gradient-expense",
       iconColor: "text-expense-foreground",
-      delay: hasRealBalance ? "200ms" : "100ms",
+      delay: "200ms",
     },
     {
       title: "Reservas",
@@ -53,17 +50,8 @@ export function SummaryCards({ totals, bankBalance = 0 }: SummaryCardsProps) {
       icon: PiggyBank,
       gradient: "gradient-reserve",
       iconColor: "text-reserve-foreground",
-      delay: hasRealBalance ? "300ms" : "200ms",
-    },
-    // Only show calculated balance if no bank connection
-    ...(!hasRealBalance ? [{
-      title: "Saldo",
-      value: totals.saldo,
-      icon: Wallet,
-      gradient: totals.saldo >= 0 ? "gradient-income" : "gradient-expense",
-      iconColor: "text-primary-foreground",
       delay: "300ms",
-    }] : []),
+    },
   ];
 
   return (
