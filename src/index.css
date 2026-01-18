@@ -142,9 +142,13 @@
     @apply border-border;
   }
 
-  body {
-    @apply bg-background text-foreground antialiased;
+  html, body {
+    @apply bg-background text-foreground antialiased overflow-x-hidden;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  #root {
+    @apply overflow-x-hidden;
   }
 }
 
